@@ -86,7 +86,7 @@ The four required answers are in `README.md` (they were specified to live
 there). In short: the system refuses to act on legal/financial mail alone
 (Q1), untrusted text enters only as quoted data in a prompt or a pattern
 scan, never as instructions, and the gate is the only path to `outbox/` (Q2),
-accountability rests with the human who approved the send and is traceable
+accountability rests with whoever approved the send and is traceable
 through the `gate` events in `trace.jsonl` (Q3), and `pipeline.py`'s
 `triage()` is the router, `grounded_draft`/`execute_sends` are the tasks,
 `gate()` is the human-in-the-loop a framework would have wrapped for me (Q4).

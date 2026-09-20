@@ -105,10 +105,10 @@ gated decision lands there, tagged by capability.
 
 **1. What did you refuse to automate?**
 The Hartwell & Cho signature requests (m018, m048, m055) get a drafted reply
-but are `escalate`d — the send sits in the pending-actions pane until a human
-approves it. Signing off on a legal amendment is the kind of wrong a draft
-can't take back, so the line is drawn at anything touching legal or money:
-the system prepares, the human commits.
+but are `escalate`d — the send sits in the pending-actions pane until the
+owner approves it. Signing off on a legal amendment is a mistake no draft
+can take back, so the line is drawn at anything touching legal or money:
+the system prepares, the owner decides.
 
 **2. Where does untrusted text enter your system?**
 Message bodies reach the model only as quoted fields inside a prompt
@@ -117,16 +117,16 @@ pure pattern scan (`guard.py`) — no code path ever interprets body text as a
 command, and the preference parser (`memory.is_safe_preference`) refuses to
 store anything that asks to weaken the gate, which is what m039 tries. An
 attacker would have to defeat the architecture, not a prompt: get a
-malicious action past `gate()` in `pipeline.py`, the only caller of
-`send_message()`, and past the human answering it.
+malicious action past `gate()` in `pipeline.py` — the only caller of
+`send_message()` — and then past the approval prompt itself.
 
 **3. Who is accountable when it sends the wrong thing?**
-The human who approved the send — external and sensitive mail can't leave
-without a `y` at the gate. `trace.jsonl` records the full chain for every
-send: the `decision` that chose to reply, the `read` events showing which
-messages grounded the draft, the `draft` event with cited ids, and the
-`gate` event with the proposed action and the human's answer, so a bad send
-can be traced back to which step failed.
+Whoever approved the send — external and sensitive mail can't leave without
+a `y` at the gate. `trace.jsonl` records the full chain for every send: the
+`decision` that chose to reply, the `read` events showing which messages
+grounded the draft, the `draft` event with cited ids, and the `gate` event
+with the proposed action plus the answer given, so a bad send can be traced
+back to the exact step that failed.
 
 **4. Name your own machinery.**
 `triage()` in `pipeline.py` is the router (the part a framework would call a
