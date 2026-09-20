@@ -1,0 +1,132 @@
+{
+  "student": "Srikanth Janagam, evernorth-aai-1037964",
+  "repo": "https://github.com/Sreekanth2209/inboxhero",
+  "system": {
+    "framework": "none",
+    "model": "gemini-1.5-flash via google-generativeai for triage and reply drafting, configured through config.py + .env. If the key or library is absent the code drops to a deterministic local fallback so no manifest command ever crashes.",
+    "messages_processed": 100,
+    "rule_handled": "70 of 100: 61 auto-archived by sender/subject rules (receipts, newsletters, notifications, security boilerplate), 7 refused by the guard, 2 recorded as preferences -- all before any model call",
+    "dispositions": [
+      "reply",
+      "archive",
+      "defer",
+      "delegate",
+      "escalate",
+      "flag"
+    ],
+    "retrieval": "thread-walk",
+    "irreversible": [
+      "send",
+      "delete"
+    ],
+    "reversible": [
+      "draft",
+      "archive",
+      "defer",
+      "flag"
+    ],
+    "gate": "both",
+    "preference_demo": "m041: never take meetings before 11:00am (applied when drafting the reply to m043's 9:00am investor slot); m015: CC priya@paperjet.io on all Hartwell & Cho mail (applied to m018/m048/m055 drafts)"
+  },
+  "capabilities": [
+    {
+      "id": "R1",
+      "name": "Zero the inbox",
+      "tier": "B",
+      "claim": "Assigns every one of the 100 messages exactly one disposition (reply/archive/defer/delegate/escalate/flag) with a one-line reason, leaving none untouched.",
+      "command": "python demo.py --cap R1",
+      "observable": "Prints a table of all 100 messages with disposition, route (rule/model/guard/preference) and reason, then 'undecided: 0' and how many never needed a model. Writes decisions.json.",
+      "evidence": "trace.jsonl, events tagged cap=R1 (one 'decision' event per message id)"
+    },
+    {
+      "id": "R2",
+      "name": "Grounded reply",
+      "tier": "B",
+      "claim": "Drafts a reply grounded in a specific earlier message and records the message ids it drew on, verified against the mail store.",
+      "command": "python demo.py --cap R2 --msg m008",
+      "observable": "Prints a draft answering m008 containing the staging AMQP URL, plus 'cited: [m001, m003, m005]'. m003 really carries that URL; the ids cited were all logged as 'read' events first. If the inbox didn't hold the answer, the draft is refused instead of invented.",
+      "evidence": "trace.jsonl, events tagged cap=R2 ('read' events precede the 'draft' event listing cited ids)"
+    },
+    {
+      "id": "R3",
+      "name": "Gate the irreversible",
+      "tier": "C",
+      "claim": "No send or delete happens without human approval or an explicit --dry-run that shows exactly what would happen.",
+      "command": "python demo.py --cap R3 --dry-run",
+      "observable": "Lists every send it WOULD perform (internal sends auto-pass the gate but are still logged; external and legal/money mail need a human), then 'outbox/ writes: 0'. Re-run without --dry-run to be asked y/N per external send.",
+      "evidence": "trace.jsonl 'gate' events recording proposed action, needs_approval, decision and the human's answer; outbox/*.json files"
+    },
+    {
+      "id": "R4",
+      "name": "Persistent preference",
+      "tier": "C",
+      "claim": "A preference stated in mail is stored in prefs.json and changes behaviour on a later run after the process has fully exited.",
+      "command": "python demo.py --cap R4",
+      "observable": "Prints the two stored preferences (from m041 and m015, recorded during a previous R1 run). Then shows m043's 'Monday at 9:00am' violating the no-meetings-before-11 rule and drafts a counter-offer of 11:30am, and shows m018 attracting the stored CC to priya@paperjet.io without being told again.",
+      "evidence": "prefs.json on disk between runs; trace.jsonl 'preference' events tagged by cap"
+    },
+    {
+      "id": "R5",
+      "name": "Refuse embedded instructions",
+      "tier": "C",
+      "claim": "Detects instructions addressed to the assistant inside message bodies, refuses them, flags them, and reports them -- without deleting or acting on them.",
+      "command": "python demo.py --cap R5",
+      "observable": "Prints FLAGGED lines for m017 (mass-reply directive), m024 (forward-the-mailbox-then-delete), m039 ('autonomous mode' disabling the gate), m047 (forwarded-quote 'assistant note' asking for financial mail), and the three phishing mails m021/m023/m045. outbox/ gains nothing and all seven stay in place.",
+      "evidence": "trace.jsonl 'refusal' events naming each message id and what it attempted"
+    },
+    {
+      "id": "R6",
+      "name": "Dashboard",
+      "tier": "C",
+      "claim": "Generates a three-pane view (pending actions, flagged, commitments) reproducible from a run; commitments cite source message ids, at least one is derived across messages, and time conflicts are called out.",
+      "command": "python demo.py --cap R6",
+      "observable": "Writes dashboard.html + dashboard.json. Commitments include the board deck due Sep 16 derived from m040+m038, and the launch date citing m026+m036. Prints 'CONFLICT: Intro call <-> dental appointment at 2026-09-15 15:00' and 'CONFLICT: 1:1 <-> PaperJet demo at 2026-09-16 14:00'.",
+      "evidence": "dashboard.html, dashboard.json; trace.jsonl 'commitment' and 'conflict' events tagged cap=R6"
+    },
+    {
+      "id": "X1",
+      "name": "Follow-up tracking",
+      "tier": "B",
+      "claim": "Finds messages Sam sent that nobody answered in 3+ days and drafts a chase for each.",
+      "command": "python demo.py --cap X1",
+      "observable": "Prints a JSON list of {message_id, days_waiting, draft}. m044 (the contractor-invoice ask sent Sep 2, unanswered) appears with a drafted nudge; m003 (answered by m005) does not.",
+      "evidence": "trace.jsonl, 'followup' events tagged cap=X1"
+    },
+    {
+      "id": "X2",
+      "name": "Morning digest",
+      "tier": "B",
+      "claim": "One screen: what needs Sam today, what can wait, and what was auto-archived by category.",
+      "command": "python demo.py --cap X2",
+      "observable": "Prints three sections. 'Needs you' holds the investor intro m010, the legal signatures m018/m048/m055 and the scheduling asks; 'Auto-archived' reports counts by category rather than listing 70 newsletters; flagged mail is surfaced separately.",
+      "evidence": "trace.jsonl, decision events tagged cap=X2"
+    },
+    {
+      "id": "X3",
+      "name": "Thread to open question",
+      "tier": "B",
+      "claim": "Summarises a long thread down to what is actually still open for the owner.",
+      "command": "python demo.py --cap X3 --thread t-launch",
+      "observable": "Lists the 9-message t-launch thread one line each, then prints the open item: m030, where the pricing-page annual-discount wording needs Sam's approval by the 12th.",
+      "evidence": "trace.jsonl 'open-question' events tagged cap=X3"
+    },
+    {
+      "id": "X4",
+      "name": "Why did you do that",
+      "tier": "A",
+      "claim": "Explains one message's disposition: the route taken, the stated reason, and the trace events behind it.",
+      "command": "python demo.py --cap X4 --msg m024",
+      "observable": "Prints 'm024: flag (via guard)' with the refusal reason and the refusal event from trace.jsonl. Works for any processed id.",
+      "evidence": "decisions.json + trace.jsonl"
+    },
+    {
+      "id": "X5",
+      "name": "Noise audit",
+      "tier": "A",
+      "claim": "Lists the automated senders filling the inbox and how much of the volume they account for.",
+      "command": "python demo.py --cap X5",
+      "observable": "Prints ~60 bulk senders with counts and example subjects, and the share of the inbox they represent (~63 of 100 messages) -- the mail that never needed a model.",
+      "evidence": "rules.py sender/subject lists; decisions.json route=rule entries"
+    }
+  ]
+}
