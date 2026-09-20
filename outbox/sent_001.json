@@ -1,0 +1,12 @@
+{
+  "to": "devika@paperjet.io",
+  "cc": [],
+  "subject": "Re: Re: Staging is down again",
+  "body": "Hi Devika,\n\nSure -- here's the staging AMQP URL from earlier in the thread:\n\namqp://pj_stage:Rk7-quiet-otter-51@broker-stg.paperjet.io:5672/pjs\n\nPoint the new worker box at that and restart it. Let me know if it doesn't come up.\n\nSam",
+  "cited": [
+    "m001",
+    "m003",
+    "m005"
+  ],
+  "sent_at": "2026-09-19T16:34:57"
+}

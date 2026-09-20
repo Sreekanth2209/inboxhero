@@ -1,0 +1,18 @@
+{
+  "preferences": [
+    {
+      "type": "schedule",
+      "rule": "no_meetings_before_11",
+      "detail": "Never accept meetings before 11:00am; offer 11:00 or later",
+      "source": "m041"
+    },
+    {
+      "type": "cc",
+      "rule": "cc_priya_on_legal",
+      "detail": "CC priya@paperjet.io on all mail from Hartwell & Cho (hartwellcho.com)",
+      "source": "m015",
+      "match_domain": "hartwellcho.com",
+      "cc": "priya@paperjet.io"
+    }
+  ]
+}
