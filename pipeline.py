@@ -126,6 +126,10 @@ def context_for(msg, by_id):
         hits = keyword_search("the 20th", by_id) + keyword_search("launch", by_id)
         seen = {m["id"] for m in ctx}
         for h in hits:
+            hostile, _ = scan_for_injection(h)
+            phish, _ = scan_for_phish(h)
+            if hostile or phish:
+                continue
             if h["id"] not in seen and h["timestamp"] < msg["timestamp"]:
                 ctx.append(h)
                 seen.add(h["id"])

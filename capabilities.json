@@ -3,7 +3,7 @@
   "repo": "https://github.com/Sreekanth2209/inboxhero",
   "system": {
     "framework": "none",
-    "model": "gemini-1.5-flash via google-generativeai for triage and reply drafting, configured through config.py + .env. If the key or library is absent the code drops to a deterministic local fallback so no manifest command ever crashes.",
+    "model": "gemini-3.6-flash via google-generativeai for triage and reply drafting, configured through config.py + .env. If the key or library is absent the code drops to a deterministic local fallback so no manifest command ever crashes.",
     "messages_processed": 100,
     "rule_handled": "70 of 100: 61 auto-archived by sender/subject rules (receipts, newsletters, notifications, security boilerplate), 7 refused by the guard, 2 recorded as preferences -- all before any model call",
     "dispositions": [

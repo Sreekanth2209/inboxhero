@@ -38,7 +38,7 @@ def backend_name():
 def ask(prompt, retries=3):
     """One prompt in, one string out. Sleeps between calls for the free tier,
     rides out HTTP 429s, and falls back locally if the model can't be reached."""
-    global _last_call
+    global _last_call, _backend
     _init()
     if _backend != "gemini":
         return None
@@ -55,8 +55,9 @@ def ask(prompt, retries=3):
         except Exception as e:
             msg = str(e)
             if "429" in msg or "quota" in msg.lower() or "rate" in msg.lower():
-                time.sleep(20 * (attempt + 1))
-                continue
+                # daily quota is dead -- no point retrying for 20 minutes
+                _backend = "local"
+                return None
             time.sleep(2)
     return None
 

@@ -20,7 +20,7 @@ _load_dotenv()
 # model provider is entirely env-driven; nothing about it is hardcoded into the logic
 MODEL_PROVIDER = os.environ.get("MODEL_PROVIDER", "gemini")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-MODEL_NAME = os.environ.get("MODEL_NAME", "gemini-1.5-flash")
+MODEL_NAME = os.environ.get("MODEL_NAME", "gemini-3.6-flash")
 # seconds to sleep between model calls; free tier is ~15 rpm
 CALL_GAP_SECONDS = float(os.environ.get("CALL_GAP_SECONDS", "4"))
 
