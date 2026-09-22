@@ -1,33 +1,24 @@
 """Thin wrapper around the model provider.
 
-Gemini via google-generativeai when GEMINI_API_KEY is set. If the library or
-the key is missing (e.g. a clean checkout with no .env), calls degrade to a
-deterministic local drafter so every command still runs -- the manifest just
-notes which model did the real work.
+Gemini is called over its HTTP API when GEMINI_API_KEY is set. If the key is
+missing, quota is exhausted, or the request times out, calls degrade to a
+deterministic local drafter so every manifest command still runs.
 """
 import time
 
+import requests
+
 from config import GEMINI_API_KEY, MODEL_NAME, CALL_GAP_SECONDS
 
-_model = None
 _backend = None
 _last_call = 0.0
 
 
 def _init():
-    global _model, _backend
+    global _backend
     if _backend is not None:
         return
-    if GEMINI_API_KEY:
-        try:
-            import google.generativeai as genai
-            genai.configure(api_key=GEMINI_API_KEY)
-            _model = genai.GenerativeModel(MODEL_NAME)
-            _backend = "gemini"
-            return
-        except Exception:
-            pass
-    _backend = "local"
+    _backend = "gemini" if GEMINI_API_KEY else "local"
 
 
 def backend_name():
@@ -47,19 +38,25 @@ def ask(prompt, retries=3):
     if gap > 0:
         time.sleep(gap)
 
-    for attempt in range(retries):
-        try:
-            _last_call = time.time()
-            resp = _model.generate_content(prompt)
-            return resp.text.strip()
-        except Exception as e:
-            msg = str(e)
-            if "429" in msg or "quota" in msg.lower() or "rate" in msg.lower():
-                # daily quota is dead -- no point retrying for 20 minutes
-                _backend = "local"
-                return None
-            time.sleep(2)
-    return None
+    url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
+           f"{MODEL_NAME}:generateContent")
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
+    try:
+        _last_call = time.time()
+        response = requests.post(
+            url,
+            params={"key": GEMINI_API_KEY},
+            json=payload,
+            timeout=15,
+        )
+        if response.status_code == 429:
+            _backend = "local"
+            return None
+        response.raise_for_status()
+        return response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+    except (requests.RequestException, KeyError, IndexError, ValueError):
+        _backend = "local"
+        return None
 
 
 CLASSIFY_PROMPT = """You are triaging email for Sam, founder of PaperJet.
