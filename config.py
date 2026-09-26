@@ -6,6 +6,8 @@ BASE_DIR = Path(__file__).resolve().parent
 # try to pull a .env file in if python-dotenv is around, otherwise read it by hand
 def _load_dotenv():
     env_file = BASE_DIR / ".env"
+    print(f"env_file - {env_file}")
+print(f"env_file - {enc_file}")
     if not env_file.exists():
         return
     for line in env_file.read_text().splitlines():
